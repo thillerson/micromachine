@@ -40,8 +40,15 @@ class MicroMachineTest < Test::Unit::TestCase
         @machine.trigger(:random_event)
       end
     end
-  end
+    
+    should "not allow a transition for :any" do
+      assert_raise HashThatDisallowsAnAnyKey::RestrictedKey do
+         @machine.transitions_for[:any]  = { :pending => :ignored }
+      end 
+    end
 
+  end
+  
   context "dealing with callbacks" do
     setup do
       @machine = MicroMachine.new(:pending)
@@ -72,5 +79,27 @@ class MicroMachineTest < Test::Unit::TestCase
       assert_equal "Ignored", @state
       assert_equal "Ignored", @current
     end
+  end
+  
+  context "with an :any transition" do
+    setup do
+      @crunk_machine = MicroMachine.new(:sober)
+      @crunk_machine.transitions_for[:sober]  = { :any => :sober }
+      @crunk_machine.transitions_for[:tipsy]  = { :sober => :tipsy }
+      @crunk_machine.transitions_for[:drunk]  = { :tipsy => :drunk }
+      @crunk_machine.transitions_for[:wasted] = { :drunk => :wasted }
+    end
+    
+    should "honor transitions from :any" do
+      assert_equal :sober, @crunk_machine.state
+      assert @crunk_machine.trigger(:tipsy)
+      assert @crunk_machine.trigger(:drunk)
+      assert @crunk_machine.trigger(:wasted)
+      assert !@crunk_machine.trigger(:tipsy)
+      # walk it off
+      assert @crunk_machine.trigger(:sober)
+      assert_equal :sober, @crunk_machine.state
+    end
+    
   end
 end
