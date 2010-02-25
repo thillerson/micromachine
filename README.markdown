@@ -30,6 +30,23 @@ Usage
     machine.trigger(:reset)    #=> true
     machine.trigger(:ignore)   #=> true
 
+Or you can save typing and declare that a transition can move from any other:
+
+	crunk_machine = MicroMachine.new(:sober)
+	crunk_machine.transitions_for[:sober]  = { :any => :sober }
+	crunk_machine.transitions_for[:tipsy]  = { :sober => :tipsy }
+	crunk_machine.transitions_for[:drunk]  = { :tipsy => :drunk }
+	crunk_machine.transitions_for[:wasted] = { :drunk => :wasted }
+
+    crunk_machine.state 			#=> :sober
+    crunk_machine.trigger(:tipsy)	#=> true
+    crunk_machine.trigger(:drunk)	#=> true
+    crunk_machine.trigger(:wasted)	#=> true
+    crunk_machine.trigger(:tipsy)	#=> false
+    # walk it off
+    crunk_machine.trigger(:sober)	#=> true
+    crunk_machine.state 			#=> :sober
+
 It can also have callbacks when entering some state:
 
     machine.on(:confirmed) do
@@ -42,8 +59,8 @@ Or callbacks on any transition:
       puts "Transitioned..."
     end
 
-Note that `:any` is a special key. Using it as a state when declaring
-transitions will give you unexpected results.
+Note that `:any` is a restricted key. Declaring a transition using the :any
+key will raise an error.
 
 Adding MicroMachine to your models
 ----------------------------------
